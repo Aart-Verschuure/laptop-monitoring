@@ -70,8 +70,8 @@ Voorwaarden voor de eerste en de laatste manier: je bent in Chrome ingelogd met 
 Let op:
 - Van gesynchroniseerde tabbladen ziet Chrome alleen wat er **op dit moment** openstaat op het andere apparaat. Een pagina die je
   opent en binnen een minuut weer sluit, kan dus gemist worden. Google Takeout vult dat later aan.
-- Een Takeout-bestand is vaak groter dan de standaard uploadlimiet van PHP (2 MB). Verhoog in `php.ini` dan
-  `upload_max_filesize` en `post_max_size`, bijvoorbeeld naar `200M`, en start `php artisan serve` opnieuw.
+- Een Takeout-bestand mag groot zijn (tientallen MB's): de browser leest het zelf en stuurt het in stukjes naar de server.
+  Je hoeft `php.ini` dus niet aan te passen. Laat het tabblad open tot de import klaar is.
 - Incognito wordt nooit gesynchroniseerd. Dat kan alleen de extensie zien, in de browser zelf.
 
 ## 3. Telefoon (Android)

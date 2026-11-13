@@ -148,26 +148,25 @@ class MonitoringTest extends TestCase
         [$device] = Device::createWithToken('Mijn laptop', 'laptop');
         $this->actingAs(User::factory()->create());
 
-        $json = json_encode(['Browser History' => [
-            ['title' => 'Wikipedia', 'url' => 'https://nl.wikipedia.org/wiki/Laravel', 'time_usec' => 1763000000000000, 'page_transition' => 'LINK'],
+        $entries = [
+            ['title' => 'Wikipedia', 'url' => 'https://nl.wikipedia.org/wiki/Laravel', 'time_usec' => 1763000000000000],
             ['title' => 'Instellingen', 'url' => 'chrome://settings', 'time_usec' => 1763000001000000],
             ['title' => 'YouTube', 'url' => 'https://www.youtube.com/', 'time_usec' => 1763000002000000],
-        ]]);
-        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('History.json', $json);
+        ];
 
-        $this->post(route('devices.browsing.import', $device), ['file' => $file])
-            ->assertRedirect()
-            ->assertSessionHas('status', fn ($s) => str_contains($s, '2 nieuwe bezoeken'));
+        $this->postJson(route('devices.browsing.import', $device), ['entries' => $entries])
+            ->assertOk()->assertJson(['imported' => 2, 'skipped' => 1]);
 
-        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('History.json', $json);
-        $this->post(route('devices.browsing.import', $device), ['file' => $file])
-            ->assertSessionHas('status', fn ($s) => str_contains($s, '0 nieuwe bezoeken'));
+        $this->postJson(route('devices.browsing.import', $device), ['entries' => $entries])
+            ->assertOk()->assertJson(['imported' => 0, 'skipped' => 3]);
 
         $this->assertSame(2, $device->browsingVisits()->count());
         $this->assertSame('nl.wikipedia.org', $device->browsingVisits()->oldest('visited_at')->first()->domain);
 
-        $bad = \Illuminate\Http\UploadedFile::fake()->createWithContent('x.json', '{"foo":1}');
-        $this->post(route('devices.browsing.import', $device), ['file' => $bad])->assertSessionHasErrors('file');
+        $this->postJson(route('devices.browsing.import', $device), ['entries' => array_fill(0, 1001, $entries[0])])
+            ->assertUnprocessable();
+
+        $this->get(route('devices.browsing', $device))->assertOk()->assertSee('takeout-form', false);
     }
 
     public function test_devices_can_be_managed(): void

@@ -83,7 +83,7 @@
 
     <div class="mt-4">{{ $visits->links() }}</div>
 
-    <details class="mt-6 rounded-xl bg-white p-4 shadow-sm" @if ($errors->has('file')) open @endif>
+    <details class="mt-6 rounded-xl bg-white p-4 shadow-sm">
         <summary class="cursor-pointer text-sm font-semibold">🔄 Geschiedenis van je Google-account importeren</summary>
         <div class="mt-3 space-y-3 text-sm text-slate-600">
             <ol class="list-decimal space-y-1 pl-5">
@@ -92,12 +92,74 @@
                 <li>Upload het hier. Bezoeken die al eerder zijn geïmporteerd worden overgeslagen, dus je kunt dit later opnieuw doen.</li>
             </ol>
             <p class="text-xs text-slate-500">Hierin staan ook bezoeken van andere apparaten met hetzelfde Google-account, mits geschiedenis-synchronisatie aan staat. Incognito zit er nooit in.</p>
-            <form method="POST" action="{{ route('devices.browsing.import', $device) }}" enctype="multipart/form-data" class="flex flex-wrap items-center gap-3">
-                @csrf
-                <input type="file" name="file" accept=".json,application/json" required class="text-sm">
-                <button class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Importeren</button>
+            <form id="takeout-form" class="flex flex-wrap items-center gap-3">
+                <input id="takeout-file" type="file" accept=".json,application/json" required class="text-sm">
+                <button id="takeout-button" class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60">Importeren</button>
             </form>
-            @error('file')<p class="text-sm text-red-600">{{ $message }}</p>@enderror
+            <div id="takeout-progress" class="hidden">
+                <div class="h-2 overflow-hidden rounded-full bg-slate-100"><div id="takeout-bar" class="h-full w-0 bg-indigo-600 transition-all"></div></div>
+            </div>
+            <p id="takeout-status" class="text-sm"></p>
         </div>
     </details>
+
+    <script>
+        // Leest het Takeout-bestand in de browser en stuurt het in stukjes naar de server,
+        // zodat grote bestanden (tientallen MB's) niet tegen de PHP-uploadlimiet aanlopen.
+        document.getElementById('takeout-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+            const file = document.getElementById('takeout-file').files[0];
+            const button = document.getElementById('takeout-button');
+            const status = document.getElementById('takeout-status');
+            const bar = document.getElementById('takeout-bar');
+            const setStatus = (text, error = false) => {
+                status.textContent = text;
+                status.className = 'text-sm ' + (error ? 'text-red-600' : 'text-slate-700');
+            };
+            if (!file) return;
+
+            button.disabled = true;
+            setStatus('Bestand lezen…');
+
+            let entries;
+            try {
+                const json = JSON.parse(await file.text());
+                entries = Array.isArray(json) ? json : json['Browser History'];
+                if (!Array.isArray(entries)) throw new Error();
+            } catch {
+                setStatus('Dit is geen Chrome-geschiedenis uit Google Takeout (History.json of BrowserHistory.json).', true);
+                button.disabled = false;
+                return;
+            }
+
+            const chunk = {{ \App\Http\Controllers\BrowsingImportController::CHUNK }};
+            let imported = 0, skipped = 0;
+            document.getElementById('takeout-progress').classList.remove('hidden');
+
+            try {
+                for (let i = 0; i < entries.length; i += chunk) {
+                    const part = entries.slice(i, i + chunk)
+                        .map(e => ({ url: e.url, title: e.title, time_usec: e.time_usec }));
+                    const res = await fetch(@json(route('devices.browsing.import', $device)), {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', Accept: 'application/json', 'X-CSRF-TOKEN': @json(csrf_token()) },
+                        body: JSON.stringify({ entries: part }),
+                    });
+                    if (!res.ok) throw new Error(res.status === 419 ? 'Sessie verlopen, herlaad de pagina.' : 'Server antwoordde met HTTP ' + res.status);
+                    const r = await res.json();
+                    imported += r.imported;
+                    skipped += r.skipped;
+                    const done = Math.min(i + chunk, entries.length);
+                    bar.style.width = (done / entries.length * 100) + '%';
+                    setStatus(`Bezig… ${done.toLocaleString('nl-NL')} van ${entries.length.toLocaleString('nl-NL')}`);
+                }
+                setStatus(`✅ Klaar: ${imported.toLocaleString('nl-NL')} nieuwe bezoeken geïmporteerd` +
+                    (skipped ? `, ${skipped.toLocaleString('nl-NL')} overgeslagen (al aanwezig of geen webpagina).` : '.') +
+                    ' Herlaad de pagina om ze te zien.');
+            } catch (e) {
+                setStatus(`❌ Gestopt na ${imported.toLocaleString('nl-NL')} bezoeken: ${e.message}. Opnieuw proberen kan gewoon, dubbele worden overgeslagen.`, true);
+            }
+            button.disabled = false;
+        });
+    </script>
 @endsection
