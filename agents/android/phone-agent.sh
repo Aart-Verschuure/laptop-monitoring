@@ -27,8 +27,17 @@ disk_total_gb=$(awk -v k="${disk_total_kb:-0}" 'BEGIN {printf "%.1f", k/1048576}
 disk_used_gb=$(awk -v k="${disk_used_kb:-0}" 'BEGIN {printf "%.1f", k/1048576}')
 
 # ---------- uptime
-uptime_s=$(awk '{print int($1)}' /proc/uptime)
-booted_at=$(date -d "@$(( $(date +%s) - uptime_s ))" -Iseconds)
+# Sommige Android-versies blokkeren /proc/uptime voor apps. Val dan terug op
+# ro.runtime.firstboot: het tijdstip (in ms) waarop Android is opgestart.
+booted_at=null
+uptime_s=$(awk '{print int($1)}' /proc/uptime 2>/dev/null)
+if [[ "$uptime_s" =~ ^[0-9]+$ ]]; then
+  booted_at=$(date -d "@$(( $(date +%s) - uptime_s ))" -Iseconds)
+else
+  firstboot=$(prop ro.runtime.firstboot)
+  [[ "$firstboot" =~ ^[0-9]{10,}$ ]] && booted_at=$(date -d "@$(( firstboot / 1000 ))" -Iseconds)
+fi
+[ "$booted_at" = null ] || booted_at="\"$booted_at\""
 
 # ---------- batterij
 battery=$(api termux-battery-status)
@@ -85,7 +94,7 @@ payload=$(jq -n \
   --argjson bat_pct "$(num "$bat_pct")" \
   --argjson bat_temp "$(num "$bat_temp")" \
   --argjson charging "$charging" \
-  --arg booted_at "$booted_at" \
+  --argjson booted_at "$booted_at" \
   --arg now "$(date -Iseconds)" \
   '{
     specs: ({
