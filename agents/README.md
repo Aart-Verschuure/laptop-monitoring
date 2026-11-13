@@ -44,6 +44,36 @@ Mislukte pogingen, zoals een verkeerde PIN, worden apart geteld.
 Chrome slaat zelf niets op van incognito-tabbladen. De extensie ziet die pagina's alleen als de schakelaar uit stap 5 aanstaat.
 Gebruik je meerdere browsers, installeer de extensie dan in elke browser.
 
+### Firefox
+
+1. Ga naar `about:debugging#/runtime/this-firefox` en klik op **Tijdelijke add-on laden**. Kies `agents/browser-extension/manifest.json`.
+2. Ga naar `about:addons` → *Laptop Monitoring* → **Machtigingen** en zet *Toegang tot gegevens voor alle websites* aan. Zonder deze machtiging kan de extensie niets naar de server sturen.
+3. Zet daar ook **Uitvoeren in privévensters** op *Toestaan*.
+
+Firefox verwijdert tijdelijke add-ons bij het afsluiten. Voor permanent gebruik moet je de extensie gratis laten ondertekenen via
+[addons.mozilla.org](https://addons.mozilla.org/developers/) (kies *Zelf distribueren*), of Firefox Developer Edition gebruiken met
+`xpinstall.signatures.required` op `false`.
+
+### Synchroniseren met je Google-account of andere browsers
+
+Er zijn drie manieren, die je ook kunt combineren. Dubbele bezoeken worden steeds overgeslagen.
+
+| Manier | Wat je krijgt | Hoe |
+|---|---|---|
+| **Gesynchroniseerde tabbladen** (Chrome/Edge) | Live: pagina's die je opent op andere apparaten met hetzelfde account, zoals Chrome op je telefoon | Instellingen van de extensie → vink *Tabbladen van mijn andere apparaten* aan. Vul eventueel het **telefoon-token** in, dan komen ze bij de telefoon te staan. |
+| **Geschiedenis importeren** (alle browsers) | Eenmalig: de geschiedenis van vóór de installatie. In Firefox zit hier ook de Firefox Sync-geschiedenis van je andere apparaten in. | Instellingen van de extensie → *Geschiedenis importeren* |
+| **Google Takeout** | De volledige Chrome-geschiedenis van je Google-account, van alle apparaten | Dashboard → *Browsen* → onderaan *Geschiedenis van je Google-account importeren* |
+
+Voorwaarden voor de eerste en de laatste manier: je bent in Chrome ingelogd met je Google-account, en synchronisatie van
+*Geopende tabbladen* en *Geschiedenis* staat aan (Chrome → Instellingen → *Jij en Google* → *Synchronisatie*).
+
+Let op:
+- Van gesynchroniseerde tabbladen ziet Chrome alleen wat er **op dit moment** openstaat op het andere apparaat. Een pagina die je
+  opent en binnen een minuut weer sluit, kan dus gemist worden. Google Takeout vult dat later aan.
+- Een Takeout-bestand is vaak groter dan de standaard uploadlimiet van PHP (2 MB). Verhoog in `php.ini` dan
+  `upload_max_filesize` en `post_max_size`, bijvoorbeeld naar `200M`, en start `php artisan serve` opnieuw.
+- Incognito wordt nooit gesynchroniseerd. Dat kan alleen de extensie zien, in de browser zelf.
+
 ## 3. Telefoon (Android)
 
 1. Installeer **Termux** en **Termux:API** via [F-Droid](https://f-droid.org). De Play Store-versies zijn verouderd.
@@ -71,7 +101,8 @@ Windows Firewall vraagt de eerste keer of PHP verkeer mag ontvangen. Kies dan al
 
 Android geeft apps zonder root-rechten geen toegang tot:
 - welke andere apps er open zijn;
-- de browsegeschiedenis (en incognito wordt nergens opgeslagen);
+- de browsegeschiedenis (en incognito wordt nergens opgeslagen). Gebruik je Chrome op de telefoon met je Google-account,
+  dan kan het wel via synchronisatie. Zie *Synchroniseren met je Google-account* hierboven;
 - het CPU-gebruik (sinds Android 8);
 - het aantal keer ontgrendelen.
 

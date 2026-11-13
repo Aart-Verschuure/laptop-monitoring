@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class BrowsingVisit extends Model
 {
-    protected $fillable = ['device_id', 'url', 'domain', 'title', 'browser', 'incognito', 'visited_at'];
+    protected $fillable = ['device_id', 'url', 'domain', 'title', 'browser', 'incognito', 'source_id', 'visited_at'];
 
     protected function casts(): array
     {

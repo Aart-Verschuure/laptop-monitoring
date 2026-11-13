@@ -126,6 +126,50 @@ class MonitoringTest extends TestCase
         $this->get(route('devices.logins', $phone))->assertOk();
     }
 
+    public function test_synced_visits_with_source_id_are_not_duplicated(): void
+    {
+        [$phone, $token] = Device::createWithToken('Mijn telefoon', 'phone');
+        $visit = [
+            'url' => 'https://nos.nl/artikel/1', 'title' => 'NOS', 'browser' => 'Chrome · Pixel 9',
+            'visited_at' => now()->subMinutes(3)->toIso8601String(), 'source_id' => 'sync:abc123',
+        ];
+
+        $this->postJson('/api/report', ['visits' => [$visit]], ['Authorization' => "Bearer $token"])->assertOk();
+        $this->postJson('/api/report', ['visits' => [$visit]], ['Authorization' => "Bearer $token"])->assertOk();
+
+        $this->assertSame(1, $phone->browsingVisits()->count());
+
+        $this->actingAs(User::factory()->create());
+        $this->get(route('devices.browsing', $phone))->assertOk()->assertSee('Chrome · Pixel 9');
+    }
+
+    public function test_google_takeout_history_can_be_imported(): void
+    {
+        [$device] = Device::createWithToken('Mijn laptop', 'laptop');
+        $this->actingAs(User::factory()->create());
+
+        $json = json_encode(['Browser History' => [
+            ['title' => 'Wikipedia', 'url' => 'https://nl.wikipedia.org/wiki/Laravel', 'time_usec' => 1763000000000000, 'page_transition' => 'LINK'],
+            ['title' => 'Instellingen', 'url' => 'chrome://settings', 'time_usec' => 1763000001000000],
+            ['title' => 'YouTube', 'url' => 'https://www.youtube.com/', 'time_usec' => 1763000002000000],
+        ]]);
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('History.json', $json);
+
+        $this->post(route('devices.browsing.import', $device), ['file' => $file])
+            ->assertRedirect()
+            ->assertSessionHas('status', fn ($s) => str_contains($s, '2 nieuwe bezoeken'));
+
+        $file = \Illuminate\Http\UploadedFile::fake()->createWithContent('History.json', $json);
+        $this->post(route('devices.browsing.import', $device), ['file' => $file])
+            ->assertSessionHas('status', fn ($s) => str_contains($s, '0 nieuwe bezoeken'));
+
+        $this->assertSame(2, $device->browsingVisits()->count());
+        $this->assertSame('nl.wikipedia.org', $device->browsingVisits()->oldest('visited_at')->first()->domain);
+
+        $bad = \Illuminate\Http\UploadedFile::fake()->createWithContent('x.json', '{"foo":1}');
+        $this->post(route('devices.browsing.import', $device), ['file' => $bad])->assertSessionHasErrors('file');
+    }
+
     public function test_devices_can_be_managed(): void
     {
         $this->actingAs(User::factory()->create());

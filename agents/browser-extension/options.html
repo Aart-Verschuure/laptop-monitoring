@@ -4,12 +4,17 @@
   <meta charset="utf-8">
   <title>Laptop Monitoring instellingen</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 520px; margin: 40px auto; color: #1e293b; }
+    body { font-family: system-ui, sans-serif; max-width: 560px; margin: 40px auto; color: #1e293b; }
+    h2 { margin-top: 32px; font-size: 17px; }
     label { display: block; margin-top: 16px; font-weight: 600; font-size: 14px; }
-    input { width: 100%; box-sizing: border-box; padding: 8px 10px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 8px; }
+    label.check { display: flex; gap: 8px; align-items: center; font-weight: 500; }
+    label.check input { width: auto; margin: 0; }
+    input, select { width: 100%; box-sizing: border-box; padding: 8px 10px; margin-top: 4px; border: 1px solid #cbd5e1; border-radius: 8px; }
     button { margin-top: 20px; padding: 8px 16px; border: 0; border-radius: 8px; background: #4f46e5; color: #fff; cursor: pointer; }
-    .note { margin-top: 24px; padding: 12px; background: #f5f3ff; border-radius: 8px; font-size: 13px; }
-    #status { margin-top: 16px; font-size: 14px; }
+    button:disabled { opacity: .6; cursor: wait; }
+    .note { margin-top: 16px; padding: 12px; background: #f5f3ff; border-radius: 8px; font-size: 13px; }
+    .hint { font-size: 13px; color: #64748b; margin-top: 4px; }
+    .status { margin-top: 12px; font-size: 14px; }
   </style>
 </head>
 <body>
@@ -21,12 +26,45 @@
   <label for="token">Apparaat-token (van je laptop)</label>
   <input id="token" type="password" placeholder="token van de pagina Apparaten">
 
+  <h2>🔄 Gesynchroniseerde apparaten (Google-account)</h2>
+  <div id="syncSection">
+    <label class="check"><input id="syncDevices" type="checkbox"> Tabbladen van mijn andere apparaten ook bijhouden</label>
+    <p class="hint">
+      Werkt als je in deze browser bent ingelogd met je Google-account en synchronisatie van <em>Geopende tabbladen</em> aanstaat
+      (ook in Chrome op je telefoon). Nieuw geopende tabbladen op die apparaten worden ongeveer elke minuut opgehaald.
+      Incognito-tabbladen van andere apparaten worden nooit gesynchroniseerd.
+    </p>
+
+    <label for="syncToken">Token voor deze bezoeken (optioneel)</label>
+    <input id="syncToken" type="password" placeholder="bv. het token van je telefoon">
+    <p class="hint">Leeg laten = de bezoeken komen bij de laptop te staan, met de apparaatnaam in de kolom Browser.</p>
+  </div>
+  <p id="syncUnsupported" class="hint" hidden>
+    Deze browser ondersteunt het ophalen van tabbladen van andere apparaten niet.
+    In Firefox komen gesynchroniseerde bezoeken (Firefox Sync) wel mee met de import hieronder.
+  </p>
+
   <button id="save">Opslaan en testen</button>
-  <div id="status"></div>
+  <div id="status" class="status"></div>
+
+  <h2>📥 Bestaande geschiedenis importeren</h2>
+  <p class="hint">
+    Stuurt de geschiedenis van vóór de installatie van deze extensie eenmalig naar het dashboard.
+    Dubbele bezoeken worden overgeslagen, dus nogmaals importeren kan geen kwaad.
+  </p>
+  <label for="days">Periode</label>
+  <select id="days">
+    <option value="7">Afgelopen week</option>
+    <option value="30" selected>Afgelopen 30 dagen</option>
+    <option value="90">Afgelopen 90 dagen</option>
+  </select>
+  <button id="import">Geschiedenis importeren</button>
+  <div id="importStatus" class="status"></div>
 
   <div class="note">
     <strong>Incognito bijhouden:</strong> open <code>chrome://extensions</code> (of <code>edge://extensions</code>),
     klik bij deze extensie op <em>Details</em> en zet <em>Toestaan in incognito</em> aan.
+    In Firefox: <code>about:addons</code> → deze extensie → <em>Uitvoeren in privévensters: Toestaan</em>.
   </div>
 
   <script src="options.js"></script>

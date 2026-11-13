@@ -48,6 +48,7 @@ class ReportController extends Controller
             'visits.*.browser' => ['nullable', 'string', 'max:50'],
             'visits.*.incognito' => ['nullable', 'boolean'],
             'visits.*.visited_at' => ['nullable', 'date'],
+            'visits.*.source_id' => ['nullable', 'string', 'max:100'],
 
             'logins' => ['nullable', 'array', 'max:1000'],
             'logins.*.type' => ['required', 'in:logon,unlock,remote,failed'],
@@ -70,14 +71,21 @@ class ReportController extends Controller
             }
 
             foreach ($data['visits'] ?? [] as $visit) {
-                $device->browsingVisits()->create([
+                $attributes = [
                     'url' => $visit['url'],
                     'domain' => parse_url($visit['url'], PHP_URL_HOST) ?: null,
                     'title' => isset($visit['title']) ? Str::limit($visit['title'], 250) : null,
                     'browser' => $visit['browser'] ?? null,
                     'incognito' => (bool) ($visit['incognito'] ?? false),
                     'visited_at' => $this->time($visit['visited_at'] ?? null),
-                ]);
+                ];
+
+                // Imports en gesynchroniseerde tabbladen kunnen vaker binnenkomen: sla dubbele over.
+                if (! empty($visit['source_id'])) {
+                    $device->browsingVisits()->firstOrCreate(['source_id' => $visit['source_id']], $attributes);
+                } else {
+                    $device->browsingVisits()->create($attributes);
+                }
             }
 
             foreach ($data['logins'] ?? [] as $login) {

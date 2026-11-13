@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BrowsingImportController;
 use App\Http\Controllers\DeviceController;
 use App\Http\Controllers\MonitorController;
 use Illuminate\Support\Facades\Route;
@@ -26,4 +27,6 @@ Route::middleware('auth')->group(function () {
         Route::get('/systeem', 'system')->name('system');
         Route::get('/inloggen', 'logins')->name('logins');
     });
+
+    Route::post('/apparaten/{device}/browsen/import', BrowsingImportController::class)->name('devices.browsing.import');
 });

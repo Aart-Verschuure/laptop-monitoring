@@ -1,13 +1,20 @@
 {
   "manifest_version": 3,
   "name": "Laptop Monitoring - Browsegeschiedenis",
-  "version": "1.0.0",
-  "description": "Stuurt bezochte pagina's (ook in incognito) naar je eigen Laptop Monitoring dashboard.",
+  "version": "1.1.0",
+  "description": "Stuurt bezochte pagina's (ook in incognito en van gesynchroniseerde apparaten) naar je eigen Laptop Monitoring dashboard.",
   "incognito": "spanning",
-  "permissions": ["tabs", "storage", "alarms"],
+  "permissions": ["tabs", "storage", "alarms", "history", "sessions"],
   "host_permissions": ["http://*/*", "https://*/*"],
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "laptop-monitoring@localhost",
+      "strict_min_version": "121.0"
+    }
   },
   "options_ui": {
     "page": "options.html",

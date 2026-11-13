@@ -5,8 +5,10 @@
 
     @if ($device->isPhone())
         <div class="mb-6 rounded-xl border border-slate-200 bg-white p-4 text-sm text-slate-600">
-            Android-browsers geven hun geschiedenis niet vrij aan andere apps, en van incognito-tabbladen wordt helemaal niets opgeslagen.
-            Browsegedrag op de telefoon kan daarom niet automatisch worden bijgehouden. Wil je dat toch, dan kan dat alleen via een eigen VPN- of DNS-filter.
+            Android-browsers geven hun geschiedenis niet rechtstreeks vrij aan andere apps, en van incognito-tabbladen wordt niets opgeslagen.
+            Gebruik je Chrome op de telefoon met hetzelfde Google-account als op de laptop? Dan kan het via synchronisatie:
+            vul in de browser-extensie op de laptop het <strong>telefoon-token</strong> in bij "Gesynchroniseerde apparaten",
+            of importeer hieronder je geschiedenis uit Google Takeout.
         </div>
     @endif
 
@@ -80,4 +82,22 @@
     </div>
 
     <div class="mt-4">{{ $visits->links() }}</div>
+
+    <details class="mt-6 rounded-xl bg-white p-4 shadow-sm" @if ($errors->has('file')) open @endif>
+        <summary class="cursor-pointer text-sm font-semibold">🔄 Geschiedenis van je Google-account importeren</summary>
+        <div class="mt-3 space-y-3 text-sm text-slate-600">
+            <ol class="list-decimal space-y-1 pl-5">
+                <li>Ga naar <a href="https://takeout.google.com" target="_blank" rel="noopener noreferrer" class="text-indigo-600 hover:underline">takeout.google.com</a>, klik op <em>Alles deselecteren</em> en vink alleen <strong>Chrome</strong> aan.</li>
+                <li>Download het archief en pak het uit. Kies het bestand <code>Chrome/History.json</code> (of <code>BrowserHistory.json</code>).</li>
+                <li>Upload het hier. Bezoeken die al eerder zijn geïmporteerd worden overgeslagen, dus je kunt dit later opnieuw doen.</li>
+            </ol>
+            <p class="text-xs text-slate-500">Hierin staan ook bezoeken van andere apparaten met hetzelfde Google-account, mits geschiedenis-synchronisatie aan staat. Incognito zit er nooit in.</p>
+            <form method="POST" action="{{ route('devices.browsing.import', $device) }}" enctype="multipart/form-data" class="flex flex-wrap items-center gap-3">
+                @csrf
+                <input type="file" name="file" accept=".json,application/json" required class="text-sm">
+                <button class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700">Importeren</button>
+            </form>
+            @error('file')<p class="text-sm text-red-600">{{ $message }}</p>@enderror
+        </div>
+    </details>
 @endsection
