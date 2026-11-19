@@ -1,7 +1,7 @@
 {
     "$schema": "https://openapi.vercel.sh/vercel.json",
     "framework": null,
-    "buildCommand": "mkdir -p dist && cp public/favicon.ico public/robots.txt dist/",
+    "buildCommand": "mkdir -p dist && cp -r public/favicon.ico public/robots.txt public/manifest.webmanifest public/sw.js public/offline.html public/icons dist/",
     "installCommand": "echo 'Composer wordt door vercel-php geinstalleerd'",
     "outputDirectory": "dist",
     "functions": {

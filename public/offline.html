@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0f172a">
+    <title>Geen verbinding · Laptop Monitoring</title>
+    <style>
+        body { margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+               background: #f1f5f9; color: #1e293b; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+        .card { max-width: 22rem; margin: 1rem; padding: 2rem; text-align: center; background: #fff;
+                border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,.1); }
+        img { width: 72px; height: 72px; }
+        h1 { font-size: 1.25rem; margin: 1rem 0 .5rem; }
+        p { color: #475569; font-size: .9rem; line-height: 1.5; }
+        button { margin-top: 1rem; padding: .6rem 1.2rem; border: 0; border-radius: .5rem;
+                 background: #4f46e5; color: #fff; font-size: .95rem; cursor: pointer; }
+        button:hover { background: #4338ca; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <img src="/icons/icon-192.png" alt="">
+        <h1>Geen verbinding</h1>
+        <p>Laptop Monitoring heeft internet nodig om actuele gegevens te tonen. Controleer je verbinding en probeer het opnieuw.</p>
+        <button onclick="location.reload()">Opnieuw proberen</button>
+    </div>
+    <script>window.addEventListener('online', () => location.reload());</script>
+</body>
+</html>
